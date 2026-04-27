@@ -1,0 +1,16 @@
+Synthetic Data Cleaning Report
+Input file: /Users/reddylg/Job_Market_Analyzer/Data/synthetic_data.csv
+Output file: /Users/reddylg/Job_Market_Analyzer/Data/clean_data.csv
+
+Total input rows: 8000
+Rows retained: 5748
+Rows removed: 2252
+Retention rate: 71.85%
+
+Removal reasons:
+- duplicate_content_row: 249
+- duplicate_record_id: 138
+- invalid_date_posted: 363
+- invalid_salary_range: 321
+- invalid_years_experience: 334
+- null_or_missing_required_field: 847
