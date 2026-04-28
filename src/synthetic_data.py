@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 
-OUTPUT_FILE = Path("synthetic_job_data.csv")
+OUTPUT_FILE = Path(__file__).resolve().parent / "Data" / "synthetic_data.csv"
 RECORDS_TO_ADD = 8000
 ERROR_RATE = 0.22
 NULL_RATE = 0.10
@@ -56,6 +56,30 @@ SKILLS = [
     "dbt",
 ]
 
+# Salary correlation tables
+TITLE_BASE_SALARY = {
+    "Research Scientist":        (95000, 120000),
+    "Machine Learning Engineer": (100000, 130000),
+    "Data Engineer":             (85000, 110000),
+    "Analytics Engineer":        (80000, 105000),
+    "BI Developer":              (70000,  95000),
+    "Data Analyst":              (65000,  88000),
+    "Product Analyst":           (65000,  88000),
+    "Business Analyst":          (60000,  85000),
+}
+
+LOCATION_MULTIPLIER = {
+    "San Francisco, CA": 1.20,
+    "New York, NY":      1.15,
+    "Seattle, WA":       1.10,
+    "Boston, MA":        1.08,
+    "Chicago, IL":       1.05,
+    "Remote":            1.02,
+    "Austin, TX":        1.00,
+}
+
+PREMIUM_SKILLS = {"TensorFlow", "Spark", "AWS", "Airflow"}
+
 FIELDS = [
     "record_id",
     "company",
@@ -80,20 +104,39 @@ def _next_record_id(path: Path) -> int:
         return int(rows[-1]["record_id"]) + 1
 
 
+def _compute_salary(title: str, location: str, experience: int, skills: list[str]) -> tuple[int, int]:
+    base_low, base_high = TITLE_BASE_SALARY[title]
+    base = random.randint(base_low, base_high)
+
+    base += experience * random.randint(2500, 3500)
+
+    base += sum(random.randint(4000, 7000) for s in skills if s in PREMIUM_SKILLS)
+
+    base = int(base * LOCATION_MULTIPLIER[location])
+
+    noise = random.randint(-6000, 6000)
+    low_salary = max(50000, base + noise)
+    high_salary = low_salary + random.randint(10000, 35000)
+    return low_salary, high_salary
+
+
 def _generate_record(record_id: int) -> dict:
     posted_date = datetime.now() - timedelta(days=random.randint(0, 60))
-    low_salary = random.randint(60000, 130000)
-    high_salary = low_salary + random.randint(5000, 40000)
+    title      = random.choice(TITLES)
+    location   = random.choice(LOCATIONS)
+    experience = random.randint(0, 10)
+    skills     = random.sample(SKILLS, k=3)
+    low_salary, high_salary = _compute_salary(title, location, experience, skills)
 
     return {
-        "record_id": record_id,
-        "company": random.choice(COMPANIES),
-        "job_title": random.choice(TITLES),
-        "location": random.choice(LOCATIONS),
-        "salary_usd": f"{low_salary}-{high_salary}",
-        "years_experience": random.randint(0, 10),
-        "date_posted": posted_date.strftime("%Y-%m-%d"),
-        "skills": ", ".join(random.sample(SKILLS, k=3)),
+        "record_id":        record_id,
+        "company":          random.choice(COMPANIES),
+        "job_title":        title,
+        "location":         location,
+        "salary_usd":       f"{low_salary}-{high_salary}",
+        "years_experience": experience,
+        "date_posted":      posted_date.strftime("%Y-%m-%d"),
+        "skills":           ", ".join(skills),
     }
 
 
